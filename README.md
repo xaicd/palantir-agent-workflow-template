@@ -10,6 +10,17 @@
 |:---|:---|:---|:---|
 | `palantir-foundry-roles-workflow` | `.agents/skills/palantir-foundry-roles-workflow/` | 全部 | FDA/FDSE/DS/Core SWE/PRE 角色定义、职责、审查清单、六大红线 |
 | `comprehensive-testing-workflow` | `.agents/skills/comprehensive-testing-workflow/` | DS + FDSE | PGlite 脱机沙箱、E2E Tab 遍历、死穴嗅探、环境握手、物理遮挡检测 |
+| `proxy-network-workflow` | `.agents/skills/proxy-network-workflow/` | PRE + SRE | Mihomo TUN 代理热重载、内网网段自适应探测放行与合规海外节点锁定 |
+| `ui-ux-pro-max` | `.agents/skills/ui-ux-pro-max/` | FDSE + 前端 | 全栈 UI/UX 设计库：67 种风格、96 套色板、组件设计决策与无障碍指引 |
+
+### 多媒体与课件内容工业化
+
+| Skill | 路径 | 说明 |
+|:---|:---|:---|
+| `video-to-transcript` | `.agents/skills/video-to-transcript/` | 音视频下载与 Whisper 批量转写流水线 |
+| `lecture-lesson-plan` | `.agents/skills/lecture-lesson-plan/` | 逐字稿机器清洗、同音词纠错与结构化教案生成 |
+| `course-deck` | `.agents/skills/course-deck/` | 1080P 多文件 HTML 独立课件渲染与矢量 PDF/PPTX 导出 |
+| `course-commerce-generation` | `.agents/skills/course-commerce-generation/` | 真实教案、PPTX、PDF 讲义与 H.264 MP4 自动化造数流水线 |
 
 ### 图表可视化（来自 [archify](https://github.com/tt-a1i/archify)）
 
@@ -33,8 +44,10 @@
 | `/fdse` | FDSE 前线部署工程师 | 全栈功能开发、死穴消除、防御性测试 |
 | `/ds` | DS 部署战略专家 | 业务旅程探路、UAT 验收、死穴嗅探 |
 | `/pre` | PRE 产品可靠性工程师 | 环境版本握手、镜像发布治理 |
+| `/proxy-refresh` | PRE / SRE 代理运维 | Mihomo TUN 节点测速刷新与内网旁路放行 |
 
 > **部署 SOP**（`/deploy-dev`、`/deploy-test`、`/deploy-prod`）由各项目按自身基础设施自行维护。
+> **持续同步命令**：`bash scripts/sync-skills.sh --push`，可一键将业务主工程的通用技能同步回流至本模板仓。
 
 ---
 
