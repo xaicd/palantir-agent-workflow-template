@@ -1,6 +1,6 @@
 ---
 name: comprehensive-testing-workflow
-description: 用于系统测试、单元测试、本地脱机沙箱测试、E2E 浏览器旅程、移动端真机快照测试与物理遮挡审查。沉淀了 PGlite WASM 嵌入式测试、A11y 交互点嗅探、DOM 物理遮挡几何计算、多模态屏幕快照视觉验证与反造数断言的全套实战经验。适用于"执行测试""编写单测/集成测试""本地脱机测试""E2E回归""排查UI遮挡与白屏"等场景。
+description: 用于系统测试、单元测试、本地脱机沙箱测试、E2E 浏览器旅程、移动端真机快照测试与物理遮挡审查。沉淀了 PGlite WASM 嵌入式测试、A11y 交互点嗅探、DOM 物理遮挡几何计算、多模态屏幕快照视觉验证与反造数断言的全套实战经验。适用于“执行测试”“编写单测/集成测试”“本地脱机测试”“E2E回归”“排查UI遮挡与白屏”等场景。
 ---
 
 # 综合测试与质量保障通用工作流 (Comprehensive Testing Workflow)
@@ -12,7 +12,7 @@ description: 用于系统测试、单元测试、本地脱机沙箱测试、E2E 
 
 ## 1. 核心理念与分层测试矩阵
 
-为了彻底解决"依赖外部 Docker 数据库易崩溃、端口冲突、启动慢、数据污染、无法脱机离线测试"的痛点，系统确立了**四层递进式自动化测试金字塔**：
+为了彻底解决“依赖外部 Docker 数据库易崩溃、端口冲突、启动慢、数据污染、无法脱机离线测试”的痛点，系统确立了**四层递进式自动化测试金字塔**：
 
 ```
 [Layer 1: 静态守卫与架构门禁] ────> 模块边界扫描 / 路由契约覆盖 / 图标与字典枚举检查
@@ -78,7 +78,7 @@ npm run db:pglite
 - 快捷入口与卡片动作 (`[data-action]`, `[data-entry]`)
 
 ### 3.2 物理遮挡几何计算 (Hit-Testing 遮挡判定算法)
-**通用痛点**: 移动端底部 Tab、吸底按钮（Sticky Footer）或悬浮按钮（Floating Action Button）极易发生 z-index 层级过高，将页面主要表单、提交按钮物理遮挡，导致用户"看得见但点不到"。
+**通用痛点**: 移动端底部 Tab、吸底按钮（Sticky Footer）或悬浮按钮（Floating Action Button）极易发生 z-index 层级过高，将页面主要表单、提交按钮物理遮挡，导致用户“看得见但点不到”。
 
 **自动化判定标准算法**:
 ```ts
@@ -117,17 +117,17 @@ const isObstructed = await page.evaluate((selector) => {
    - 测试过程中全程监听 `page.on('pageerror')` 与 `page.on('response')`；
    - 严禁产生 `ReferenceError`、`TypeError` 或服务端 500 页面崩溃。
 4. **弹窗排版几何约束**:
-   - 模态弹窗外层必须具备 `max-h-[90vh]` + `flex flex-col`，内容主体必须 `overflow-y-auto`，严禁超出屏幕视口导致"确定"按钮不可见。
+   - 模态弹窗外层必须具备 `max-h-[90vh]` + `flex flex-col`，内容主体必须 `overflow-y-auto`，严禁超出屏幕视口导致“确定”按钮不可见。
 
 ### 3.5 全分段器与横向 Tab 遍历穷举规范 (Segment & Tab Exhaustion - FDSE 强约束)
-- **痛点根治**: 杜绝"只测默认 Tab，漏测次级 Tab 内部条件样式或非沉浸分支（如 `showBanner is not defined`）"；
+- **痛点根治**: 杜绝“只测默认 Tab，漏测次级 Tab 内部条件样式或非沉浸分支（如 `showBanner is not defined`）”；
 - **强制执行**:
   1. 页面若存在多个 Tab（如推荐/直播/关注/同城/团购/商城），测试必须通过循环依次点击所有 Tab；
   2. 每次点击后等待 DOM 渲染，断言控制台无未捕获异常，且错误边界（Error Boundary）未被触发；
   3. 对包含直链参数的场景（如 `?tab=city`），执行直接访问与跨 Tab 点击双向验证。
 
 ### 3.6 假交互与死穴按钮自动嗅探 (Dead Action Hunter - DS 强约束)
-- **痛点根治**: 杜绝"看着像按钮，点了毫无反应"的半成品假交互（如城市切换按钮无 `onClick`、卡片无 `href`）；
+- **痛点根治**: 杜绝“看着像按钮，点了毫无反应”的半成品假交互（如城市切换按钮无 `onClick`、卡片无 `href`）；
 - **判定标准**:
   - 嗅探页面所有具备交互形态的元素（`button`、`[role="button"]`、`a[href]`、带有 `cursor-pointer` 或 `active:scale-*` 的容器）；
   - 触发点击后，必须产生以下 **四维状态流转之一**：
@@ -138,7 +138,7 @@ const isObstructed = await page.evaluate((selector) => {
   - 若四项均为 0，判定为 `SUSPECTED_DEAD_CLICK` 死穴缺陷。
 
 ### 3.7 靶机环境版本指纹握手协议 (Environment Provenance Handshake - PRE 强约束)
-- **痛点根治**: 杜绝"本地 master 已修复，但测试服务器容器仍在跑旧镜像"的脱节幻觉；
+- **痛点根治**: 杜绝“本地 master 已修复，但测试服务器容器仍在跑旧镜像”的脱节幻觉；
 - **探针握手**:
   1. 在执行测试前，自动化脚本必须首先调用测试环境探针（如 `GET /api/health` 或校验页面内置的 build SHA）；
   2. 校验测试环境运行的 Git Commit SHA 是否与当前分支对齐；
