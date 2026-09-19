@@ -13,16 +13,30 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEMPLATE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-SOURCE_DIR="${1:-/root/workspace/wenlv-next}"
+SOURCE_DIR="/root/workspace/wenlv-next"
 AUTO_PUSH=false
 
-for arg in "$@"; do
-  case "$arg" in
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     --push)
       AUTO_PUSH=true
+      shift
+      ;;
+    --source)
+      SOURCE_DIR="$2"
+      shift 2
       ;;
     --source=*)
-      SOURCE_DIR="${arg#*=}"
+      SOURCE_DIR="${1#*=}"
+      shift
+      ;;
+    -*)
+      echo "⚠️ 未知选项: $1"
+      shift
+      ;;
+    *)
+      SOURCE_DIR="$1"
+      shift
       ;;
   esac
 done
@@ -61,11 +75,16 @@ for skill in "${SYNC_SKILLS[@]}"; do
     echo "📦 同步 Skill: $skill ..."
     mkdir -p "$DEST_PATH"
     cp -r "$SRC_PATH"/* "$DEST_PATH"/
-    ((SYNC_COUNT++))
+    SYNC_COUNT=$((SYNC_COUNT + 1))
   else
     echo "⚠️ 跳过: 源仓库未找到 Skill [$skill]"
   fi
 done
+
+# 通用模板自动脱敏处理（保持模板代码纯净通用）
+if [[ -d "$TEMPLATE_DIR/.agents/skills" ]]; then
+  find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s/SD-JN-%/{{REGION_CODE_PREFIX}}%/g" {} +
+fi
 
 echo ""
 echo "✅ 成功检查并同步了 $SYNC_COUNT 个通用技能！"
@@ -86,8 +105,8 @@ echo ""
 
 if [[ "$AUTO_PUSH" == true ]]; then
   echo "🚀 执行自动 Commit 与 Push..."
-  git add .agents/skills/
-  git commit -m "feat(skills): sync latest reusable skills from wenlv-next"
+  git add .agents/skills/ scripts/
+  git commit -m "feat(skills): sync latest reusable skills and update sync-skills.sh"
   git push origin master
   echo "🎉 已成功推送到远端模板仓库: origin/master"
 else
