@@ -63,6 +63,15 @@ SYNC_SKILLS=(
   "lecture-lesson-plan"
   "course-deck"
   "course-commerce-generation"
+  "commit-discipline-cross-session"
+  "pre-commit-environment-check"
+  "rollback-discipline"
+  "incident-postmortem"
+  "docker-compose-env-discipline"
+  "agy-orchestration"
+  "digital-employee-operations"
+  "app-agent-device-combo-validation"
+  "feature-development-workflow"
 )
 
 SYNC_COUNT=0
@@ -83,7 +92,14 @@ done
 
 # 通用模板自动脱敏处理（保持模板代码纯净通用）
 if [[ -d "$TEMPLATE_DIR/.agents/skills" ]]; then
+  echo "🧹 执行模板通用脱敏过滤..."
   find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s/SD-JN-%/{{REGION_CODE_PREFIX}}%/g" {} +
+  find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s/tc-robin-claw/{{DEPLOY_SERVER}}/g" {} +
+  find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s/192.144.253.205/{{TEST_SERVER_IP}}/g" {} +
+  find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s/wenlv-next-app/{{APP_NAME}}/g" {} +
+  find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s/wenlv-next/{{PROJECT_NAME}}/g" {} +
+  find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s/dayanwa\.cn/{{APP_DOMAIN}}/g" {} +
+  find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s|/home/beye/android-sdk/platform-tools|\$ANDROID_HOME/platform-tools|g" {} +
 fi
 
 echo ""

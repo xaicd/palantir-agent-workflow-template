@@ -190,7 +190,191 @@ const isObstructed = await page.evaluate((selector) => {
 
 ---
 
+### 5.1 永久化重复踩坑清单（DS 强约束）
+
+**核心原则**: 同一个错误碰到 1 次就应永久化。绝不允许第 2、3 次重复出现。本节按"已踩坑 → 永久规则"模式沉淀，每次部署/测试都对照检查。
+
+| # | 错误 | 永久规则 | 来源 |
+|---|---|---|---|
+| 1 | `version-check?platform=android` 报 `Invalid option: expected one of "IOS"|"ANDROID"` | **枚举 query 参数必须大写**: `platform=ANDROID` 不是 `android`。写 e2e/手动 curl 时一律大写 | 2026-09-21 |
+| 2 | `docker save/load` 失败后用 `docker tag r<old> r<new>` rename 假装新镜像（但 ID 没变） | **镜像 ID 必须真变**: `docker images r<new> --format "{{.ID}}"` ≠ 上一个 ID。假 build = 假部署 | 2026-09-21 |
+| 3 | 本地 push 到 `github.com` 但远端 `{{DEPLOY_SERVER}}` 上 `origin` 指向 `gitee`（远端看不到新代码） | **远端必须 `git fetch github feat/<branch>:<branch>`** 拉 github 源 | 2026-09-21 |
+| 4 | COS 默认域名对 APK 分发返回 `403 DownloadForbidden` | **必须用备案自定义域名**（如 `dl.{{APP_DOMAIN}}`）+ 设 `COS_APP_PUBLIC_BASE` | 2026-09-21 |
+| 5 | NextAuth admin 登录密码明文被 `CredentialsSignin` 拒绝 | **必须 MD5 无盐哈希**: `printf '%s' "$PWD" | md5sum` | 2026-09-21 |
+| 6 | API 响应是 AES 加密 `{payload: "..."}`，直接 jq 看不到数据 | **必须 openssl 解密**: `openssl enc -d -aes-256-cbc -md md5 -a -A -pass "pass:$API_ENCRYPTION_KEY"` | 2026-09-21 |
+| 7 | `docker compose up -f <file>` 跳过 `docker-compose.override.yml` → NextAuth UntrustedHost → 全站会话挂 | **`docker compose up -d` 必须无 `-f`**（默认加载 override.yml） | 长期教训 |
+| 8 | `docker build` 不加 `--no-cache` → ENV layer 命中旧空值 → 客户端 key 为空（静默解密失败） | **本地 build 必须 `--no-cache`**（远端 build 有 cache 可省） | 长期教训 |
+| 9 | `git tag` 在 detached HEAD 上做 commit → push 不进分支 | **commit 前必须 `git checkout <branch>`** 然后 `git log <branch>` 确认 | 2026-09-21 |
+| 10 | sed 在 ssh 双引号里嵌 `$VAR` → 字面量不展开 → nginx 出现字面 `$VAR` | **nginx sed 必须字面量，禁止 ssh 双引号嵌变量** | 长期教训 |
+| 11 | `docker ps` 看 Up X hours 误以为是新容器（实际是累加） | **新容器标志: `Up <duration> (health: starting)`** 表示 seconds-old 是 running | 2026-09-21 |
+| 12 | 远端 `docker images r<tag>` 看到旧 ID，build 卡在 step 24 久没新输出 | **Step 24 Next.js 编译需 5-10 min 不是 hang**，看 `docker stats <container>` 看 CPU 是否>0 验证真在跑 | 2026-09-21 |
+| 13 | `adb install -r` arm64-only APK 到 x86_64 emulator → `dlopen failed: libflutter.so is for EM_AARCH64` | **emulator APK 必须含 x86_64**: 用 `flutter build apk --release`（universal）或 `--target-platform=android-x64 --android-arm64` 多架构 | 2026-09-21 |
+| 14 | `flutter build apk --target-platform=android-arm64 --split-per-abi` 只生 arm64（37MB），emulator 装不上 | **默认 `flutter build apk --release`**（universal 多架构）| 2026-09-21 |
+| 15 | 远端 `origin` 默认指向 gitee，pull 不到 github 最新代码 | **远端必须 `git fetch github` + `git reset --hard github/<branch>`** | 2026-09-21 |
+| 16 | `subprocess.run(['cd', dir, '&&', 'cmd'])` 因 `'cd'` 是 shell builtin 找不到 | **Python 用 `workdir=` 参数**或 `cwd=` 或 `os.chdir`，不要把 `cd` 传进 argv | 2026-09-21 |
+| 17 | `AppConfig.apiBaseUrl` 默认值 `'http://10.0.2.2:3000'` (emulator localhost) → 真机用户 version-check 永远打不通 → **永远不会触发 forceUpgrade 弹窗** | **默认必须为真测试域名 `http://{{TEST_SERVER_IP}}`**（保证未 dart-define 编译的老 APK 也能直连测试环境） | 2026-09-21 |
+| 18 | `AppConfig.apiEncryptionKey` 默认值 `'qloapps_api_secret_key_2026_!@'` 与服务端真 64 字符 key 不匹配 → CryptoInterceptor 解密失败 → **version-check 响应静默解不出 data → 不弹窗** | **build 必须传 `--dart-define=API_ENCRYPTION_KEY=<真key>`**（脚本 `scripts/app-build.sh` line 102-104 已自动从容器取）。生产强制升级链路依赖此。 | 2026-09-21 |
+| 19 | Flutter `String.fromEnvironment` 默认值在常量池，cache invalidation 不彻底 — 旧 build 的默认值字符串 (`10.0.2.2:3000`) 仍嵌在 APK 中 | **强制 flutter clean + 看 APK strings 验证 dart-define 真生效**（不应含旧默认值） | 2026-09-21 |
+| 20 | `web_shell_page.dart` line 87/149 硬编码 `'http://{{TEST_SERVER_IP}}'` 而非 `AppConfig.webBaseUrl` | **不影响 version-check**，但容易让人误以为 app 已经 dart-define 化了。实际上 web 走硬编码，API 走 dart-define。 | 长期 (未修) |
+| 21 | `subprocess.run(['cd', ...])` 跑脚本不传 `cwd=` → cwd 不对导致 `.env.test` source 失败 → `API_BASE_URL` 用错默认值 | **subprocess 必须显式传 `cwd=` + `env=...` + 把 env vars 显式 export**（不要依赖 shell 继承） | 2026-09-21 |
+
+**踩坑入册流程**（主负责人亲自验证，不信子田蛙结论）:
+
+1. **第一现场**: 子田蛙/雨蛙/玻璃蛙报告错误 → 主负责人亲自 grep + 验证根因（必须 verify_evidence 协议: PIL 像素 / git log / curl 实测）
+2. **第二现场**: 写入 `.agents/skills/<relevant-skill>/learning/<YYYY-MM-DD>-<pattern>.md`
+3. **第三现场**: `npm run workflow:learning:record -- --type failure --pattern <pattern> --scope <feature> --summary "<事实>" --prevention "<修复>"`
+4. **永久化**: 累计 3 次同 pattern + 45 天内有活跃度 → 自动写入 `active-rules.md`，主负责人复审后人工合并到 SKILL.md §5.1 本表
+
+**禁止**: 脚本、Hook 或 Agent 自动改写 SKILL.md / AGENTS.md。所有永久规则升级必须人工审批。
+
+### 5.2 learning/ 自动化晋升机制（与 feature-development-workflow §0.2 联动）
+
+`.agents/skills/feature-development-workflow/learning/` 提供 `npm run workflow:learning:record` 自动记录与晋升。同样的根因必须复用同一 `pattern`：
+
+- 累计 3 条证据 + 45 天内有活跃度 → 自动写入 `active-rules.md`
+- 用户/项目负责人明确批准 → 人工修改 SKILL.md（如本节 §5.1）
+
+---
+
 ## 6. 跨 IDE 与 CI 协同操作指引
+## 6. 跨 IDE 与 CI 协同操作指引
+
+无论是在 **Claude Code**、**Cursor**、**VS Code** 还是 **WebStorm** 中开发：
+- 随时运行 `npm run test:pglite` 验证当前单测；
+- 修改完页面交互后运行 `npm run test:e2e:pglite` 进行脱机真机快照回归；
+- 提交前运行 `npm run rules:check` 与 `npm test`，确保规则未退化且架构边界完好。
+
+### 6.1 Multi-Arch 构建与移动端/移动 H5 全链路 E2E 验证（端到端构建验证规范）
+
+凡涉及**移动端 App + 移动 H5**双端的功能闭环，必须按本节执行 Multi-Arch 构建 + 跨端一致性 E2E 验证。
+
+#### 6.1.1 Flutter App Multi-Arch 构建强制规范
+
+1. **emulator 与真机必须都能装** —— `libflutter.so` 必须包含 `arm64-v8a` + `x86_64` 双架构。`armeabi-v7a` (32位 ARM) 已过时，可不打包。
+2. **构建产物形式**:
+   - `flutter build apk --release` 默认 universal APK（含全部架构），**1 个 APK = emulator + 真机通用**。适合快速验证 + 灰度。
+   - `flutter build apk --release --split-per-abi --target-platform=android-arm64` 单架构 (~37MB)，仅适合已知目标设备（如真机发版）。
+   - **不推荐** 三 ABI 分架构（72MB），体积过大且 `armeabi-v7a` 无意义。
+3. **构建验证命令**:
+   ```bash
+   # Universal APK（含 arm64 + x86_64，emulator + 真机通用）
+   flutter clean
+   flutter pub get
+   flutter build apk --release
+   
+   # 验证 APK 含多架构
+   unzip -l build/app/outputs/flutter-apk/app-release.apk | grep "lib/"
+   # 必须看到 lib/arm64-v8a/libflutter.so 和 lib/x86_64/libflutter.so
+   ```
+4. **归档命名**: `大眼蛙-<version>-<feature>-<env>.apk`，例：`大眼蛙-0.1.71-release-直播声音+底部紧凑-多架构-测试环境.apk`
+
+#### 6.1.2 Flutter ↔ 移动 H5 一致性 E2E 验证（DS + PRE 联合）
+
+Flutter App 通过 `flutter_inappwebview` 加载移动 H5 (mobile-web 真域名)，双端共享同一后端 API。验证必须**双端对比**，不能只测一端。
+
+**双端必跑清单**:
+
+| 项目 | 移动 H5 (浏览器) | Flutter App (emulator) |
+|---|---|---|
+| sticky top-0 数量 | `getComputedStyle(el).position === 'sticky'` | PIL 像素验证 + getComputedStyle |
+| video muted | `video.muted` | `am start` + 截图中央像素 (非黑屏) |
+| 卡片跳转链接 | 抓所有 `<a>` href | 同样的 href (WebView 同源) |
+| API 数据 | curl `/api/...` | 同样的 API |
+| 真机视频声音 | 不可在浏览器验 | **必须真机 + Flutter App** |
+| 真机底部 Tab 紧凑 | 不可在浏览器验 | **必须真机 + Flutter App** |
+
+**Flutter 端特殊修复**:
+- **直播静音**: 必须在 `flutter_inappwebview` 加 `mediaPlaybackRequiresUserGesture: false`（Android WebView 默认需要手势才能播放音频）。
+- **status bar / safe-area**: 用 `SystemChrome.setSystemUIOverlayStyle` 让 SPA 真实感知 status bar 高度，不要在 SPA 内硬编码。
+- **底部 Tab 紧凑**: Flutter 端 `_buildBottomBar` 直接调高度（不受 H5 影响），跟抖音对比 ~50dp。
+
+#### 6.1.3 端到端部署链路 E2E 验证（PRE 强约束）
+
+**完整链路**: `git push → 远端真 build → 镜像 tag 翻转 → 容器重建 → emulator 装 APK → Playwright 验证 H5`
+
+每一步都有**镜像 ID 验证**（不能是 rename，必须是真正 build）:
+
+```bash
+# 1. git push
+git push origin feat/expo-rewrite
+
+# 2. 远端 git fetch github + 真 build（不是 docker save/load rename）
+ssh {{DEPLOY_SERVER}} 'git fetch github feat/expo-rewrite:feat/expo-rewrite && \
+  docker build --build-arg NEXT_PUBLIC_API_ENCRYPTION_KEY="$KEY" \
+  -t {{APP_NAME}}:r<tag> .'
+
+# 3. 验证新镜像 ID != 旧 ID（避免 rename 假 build）
+docker images {{APP_NAME}}:r<tag> --format "{{.ID}}"
+# 必须 != 上一个 tag 的 ID (如 5c648b9f6944)
+
+# 4. tag 翻转 + 容器重建
+docker tag {{APP_NAME}}:latest {{APP_NAME}}:rollback-pre-$(date -u +%Y%m%dT%H%M%SZ)
+docker tag {{APP_NAME}}:r<tag> {{APP_NAME}}:latest
+cd ~/workspace/{{PROJECT_NAME}} && docker compose up -d --force-recreate --no-deps app app-web
+
+# 5. 等 8s health check
+docker ps -a --filter "name=qloapps" --format "{{.Names}}\t{{.Image}}\t{{.Status}}"
+
+# 6. emulator 装 APK（必须是 multi-arch）
+adb -s emulator-5554 install -r ~/Desktop/<apk-name>.apk
+
+# 7. Playwright 验证 H5 全部功能（参考本 skill §3.5 + §3.6 + §4）
+```
+
+**反向验证**: 任何一步假 build / 假部署都必须在运行前发现，禁止推进到下一步。
+
+#### 6.1.4 验证通过后强制触发 App 增量更新（DS+PRE 强约束）
+
+**链路完整闭环**: 上述 §6.1.3 验证 PASS 后，**必须**触发 App 增量更新发布，让真机用户立即收到新包。
+
+**触发流程**:
+
+1. **AppRelease 数据库登记新版本**（参考 {{PROJECT_NAME}} `docs/architecture/app-release.md`）：
+   - `version`: `<major>.<minor>.<patch>`（如 `0.1.72`）
+   - `versionCode`: 自增整数（`0.1.71+71` → `0.1.72+72`）
+   - `environment`: `STAGING` / `PRODUCTION`
+   - `platform`: `android`
+   - `appType`: `cend` (C端) / `merchant` (商户后台) / `admin` (平台后台)
+   - `releaseNotes`: 简明变更清单（中文，1-3 行）
+   - `downloadUrl`: 桌面 APK 路径或 CDN 链接
+   - `forceUpdate`: `false`（首次发布）/ `true`（强制升级，阻塞旧版本）
+   - `minSupportedVersion`: 最低支持版本（如 `0.1.60`，低于此版本强制升级）
+   - `enabled`: `true`
+2. **AppRelease.publish / upsert**：通过 `prisma.appRelease.upsert()` 写库，保证幂等。
+3. **version-check API 验证**:
+   ```bash
+   curl "http://{{TEST_SERVER_IP}}/api/app/version-check?platform=android&currentVersion=0.1.70&appType=cend&deviceId=test-device"
+   ```
+   应返回新版本信息（`latestVersion: 0.1.72`, `downloadUrl`, `forceUpdate` 等）。
+4. **Flutter App 启动时主动检查**:
+   - `main.dart` 或 `app_version_check.dart` 在 `AppLifecycleState.resumed` 时调用 `/api/app/version-check`
+   - 解析响应，若 `latestVersion > currentVersion`：
+     - `forceUpdate: true` → 阻塞显示强制升级弹窗（仅"立即更新"按钮，禁用关闭）
+     - `forceUpdate: false` → 显示软提示（带"稍后"/"立即更新"按钮）
+   - APK 下载走 `downloadUrl`，MD5 校验后启动安装
+5. **CDN / 文件分发**（可选）:
+   - 桌面 APK → 对象存储 (MinIO/S3/OSS) → `downloadUrl` 指向 CDN
+   - 或本地：`file:///sdcard/Download/xxx.apk`（emulator 测试用）
+6. **监控增量更新成功率**:
+   - `version-check` API 的 QPS / 命中率
+   - App 启动主动上报版本号 → `app_version_reports` 表
+   - 灰度比例（10% → 50% → 100%）控制增量更新节奏
+
+**反例（禁止）**:
+- 验证 PASS 但忘了登记 AppRelease，用户拿不到更新
+- 只在生产环境登记，staging 不测增量链路
+- `downloadUrl` 写死桌面路径，不上 CDN
+- 没有 `forceUpdate` 字段，关键修复无法强制升级
+
+**与 §6.1.3 链路的关系**:
+- §6.1.3 验证 PASS → §6.1.4 触发增量更新
+- 缺一不可：只 build 不增量 → 用户拿不到包；只增量不验证 → 线上翻车
+
+**来源**: 2026-09-21 {{PROJECT_NAME}} 0.1.71 部署 + 验证 PASS 后真实场景：用户已确认视觉，但真机用户仍在用旧版。
+
+**来源**: 2026-09-21 {{PROJECT_NAME}} 真实部署经验（commit 3599bf2f + 4d32affc + 0.1.71 + 部署田蛙 r20260920-4）。
+
+### 6.2 跨 IDE 与 CI 协同操作指引
 
 无论是在 **Claude Code**、**Cursor**、**VS Code** 还是 **WebStorm** 中开发：
 - 随时运行 `npm run test:pglite` 验证当前单测；
