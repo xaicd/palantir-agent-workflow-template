@@ -32,6 +32,8 @@
 | `commit-discipline-cross-session` | `.agents/skills/commit-discipline-cross-session/` | 全部角色 | 跨智能体会话 Commit 纪律、双远端同步（`origin` + `gitee`）与 memory 沉淀 |
 | `incident-postmortem` | `.agents/skills/incident-postmortem/` | DS + PRE + SWE | 破坏性故障强制复盘 4 件套（根因 / 检测信号 / 拦截门禁 / 沉淀路径） |
 | `proxy-network-workflow` | `.agents/skills/proxy-network-workflow/` | PRE + SRE | Mihomo TUN 模式代理热重载、内网网段自适应探测放行与合规海外节点锁定 |
+| `deployment-workflow` | `.agents/skills/deployment-workflow/` | PRE + FDSE | 4 级联级发布链（SQL 迁移 → 镜像 → 静态前端 → 移动端 APK）与单链路反例 |
+| `deployment-tarball-test` | `.agents/skills/deployment-tarball-test/` | PRE + 雨蛙 | 测试环境轻量 V4 Tarball + systemd 软链秒级回滚极速发布（提速 50%） |
 
 ### 4. 智能体跨环境协同与数字员工运营
 
@@ -156,6 +158,20 @@ bash scripts/sync-skills.sh --push
 
 ---
 
+## 七、 核心工程守护、校验与自动化工具集
+
+| 工具 / 脚本 | 路径 | 核心能力说明 | 推荐触发命令 |
+|:---|:---|:---|:---|
+| **数据库直连守卫** | `scripts/guardrails/no-direct-db-in-personas.guard.ts` | 严禁拟人测试与智能体脚本直连 DB，强制 100% 走真实 HTTP API 避免测试与生产两张皮 | `npm run guard:no-direct-db` |
+| **规则生命周期管理** | `scripts/rules/evolve-agents-rules.ts` | 扫描 `AGENTS.md` 健康度、预估 Token 消耗、执行三阶段规则归档 | `npm run rules:check`<br>`npm run rules:evolve` |
+| **业务内容合规校验** | `scripts/tools/business-content-validator.ts` | 广告法违禁词、敏感词、死图死链与内网 SSRF 风险校验拦截 | 导入自检 / CI 门禁 |
+| **宿主机双端全自动验收** | `scripts/agent-ops/host-dual-acceptance.sh` | 组合调度 `agent-browser` 桌面端与 `agent-device` 真机/模拟器双层自动化视觉验收 | `npm run acceptance:host-dual` |
+| **通用 Skills 自动同步** | `scripts/sync-skills.sh` | 自动从主工程检测并同步通用技能至本模板，内置脱敏过滤管道 | `npm run sync:skills` |
+| **Mihomo TUN 代理热重载** | `scripts/refresh-proxy.sh` | 代理节点自动探测、测速热更新与本地内网网段自适应放行 | `npm run proxy:refresh` |
+
+---
+
 ## License
 
 MIT
+

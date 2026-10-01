@@ -72,6 +72,8 @@ SYNC_SKILLS=(
   "digital-employee-operations"
   "app-agent-device-combo-validation"
   "feature-development-workflow"
+  "deployment-workflow"
+  "deployment-tarball-test"
 )
 
 SYNC_COUNT=0
@@ -100,6 +102,12 @@ if [[ -d "$TEMPLATE_DIR/.agents/skills" ]]; then
   find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s/wenlv-next/{{PROJECT_NAME}}/g" {} +
   find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s/dayanwa\.cn/{{APP_DOMAIN}}/g" {} +
   find "$TEMPLATE_DIR/.agents/skills" -type f -name "*.md" -exec sed -i "s|/home/beye/android-sdk/platform-tools|\$ANDROID_HOME/platform-tools|g" {} +
+  if [[ -f "$TEMPLATE_DIR/.agents/skills/feature-development-workflow/learning/entries.jsonl" ]]; then
+    cat > "$TEMPLATE_DIR/.agents/skills/feature-development-workflow/learning/entries.jsonl" << 'EOF'
+{"id":"learning-template-sample-1","createdAt":"2026-09-01T00:00:00.000Z","type":"discovery","pattern":"hook-next-session-activation","scope":"workflow-configuration","summary":"新建 Hook 需在下一次会话启动后才生效，当前会话应避免直接依赖其自动行为。","prevention":"修改 Hook 后立即使用直接命令完成验证，并在下一会话观察自动触发情况。","evidence":"Hook 注入测试已通过","sensitivity":"normal"}
+{"id":"learning-template-sample-2","createdAt":"2026-09-02T00:00:00.000Z","type":"failure","pattern":"postgres-identifier-truncation","scope":"database-schema-design","summary":"PostgreSQL 会将超过 63 字符的长索引/约束标识符静默截断为 63 字符。","prevention":"在设计数据库 DDL 时统一约束标识符长度在 63 字符以内。","evidence":"超长标识符建表拦截测试确认","sensitivity":"normal"}
+EOF
+  fi
 fi
 
 echo ""

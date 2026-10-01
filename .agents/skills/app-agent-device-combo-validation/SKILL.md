@@ -38,9 +38,10 @@ npx agent-device open com.example.mobile_c_end --foreground --session cend-smoke
 # 2. snapshot -i 拿 35+ 节点 (首页含 10 金刚区)
 npx agent-device snapshot -i --session cend-smoke | grep -E "金刚|@e1[0-3]|@e9[0-9]"
 
-# 3. 验证关键业务路径（agent-device click <ref> 触发真机交互）
+# 3. 验证关键业务路径（agent-device click <ref> 触发真机交互；注意：截图严禁落在 $HOME，统一收敛至 test-results/screenshots/）
+mkdir -p test-results/screenshots
 npx agent-device click @e13 --settle --session cend-smoke    # 精品民宿 → /stays
-npx agent-device screenshot test-results/cend-stays.png --session cend-smoke
+npx agent-device screenshot test-results/screenshots/cend-stays.png --session cend-smoke
 
 # 4. 切 Tab
 npx agent-device click @e98 --settle --session cend-smoke    # 探索 → /explore

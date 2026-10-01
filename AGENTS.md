@@ -157,6 +157,8 @@
 | | `commit-discipline-cross-session` | `.agents/skills/commit-discipline-cross-session/` | 跨智能体会话 commit 纪律与双远端同步 |
 | | `incident-postmortem` | `.agents/skills/incident-postmortem/` | 事故复盘 4 件套（根因/信号/门禁/沉淀） |
 | | `proxy-network-workflow` | `.agents/skills/proxy-network-workflow/` | Mihomo TUN 代理热重载与内网自适应放行 |
+| | `deployment-workflow` | `.agents/skills/deployment-workflow/` | 4 级联级发布链（SQL → 镜像 → 静态前端 → 移动端包） |
+| | `deployment-tarball-test` | `.agents/skills/deployment-tarball-test/` | 测试环境轻量 V4 Tarball + systemd 软链秒级回滚极速发布 |
 | **智能体协同** | `digital-employee-operations` | `.agents/skills/digital-employee-operations/` | 数字员工全自主业务接管与 E2E 运营自愈 |
 | | `agy-orchestration` | `.agents/skills/agy-orchestration/` | 宿主机跨容器无头调度 Antigravity (AGY) 黄金 SOP |
 | **多媒体与设计**| `ui-ux-pro-max` | `.agents/skills/ui-ux-pro-max/` | 67 种 UI 风格、96 套色板与组件设计决策 |
@@ -166,3 +168,18 @@
 | | `video-to-transcript` | `.agents/skills/video-to-transcript/` | 音视频下载与 Whisper 批量转写流水线 |
 | | `lecture-lesson-plan` | `.agents/skills/lecture-lesson-plan/` | 逐字稿清洗、同音字纠错与结构化教案生成 |
 | | `domain-modeling` | `.agents/skills/domain-modeling/` | 领域建模、上下文地图与 ADR 记录 |
+
+---
+
+## 七、 核心工程守护与自动化守卫工具集 (Guardrails & Tools)
+
+本项目沉淀的自动化门禁与脚本全部位于 `scripts/` 目录：
+
+1. **守卫脚本**：
+   * `scripts/guardrails/no-direct-db-in-personas.guard.ts`：**严禁拟人测试与智能体脚本直连数据库**！强制 100% 模拟真实用户调用真实 HTTP API，杜绝“脚本全绿线上即崩”；
+   * `scripts/rules/evolve-agents-rules.ts` & `rules-lifecycle.config.ts`：规则生命周期自动归档与健康度 Token 审计（`npm run rules:check` / `npm run rules:evolve`）。
+2. **校验与运维工具**：
+   * `scripts/tools/business-content-validator.ts`：广告法违禁词、违法词、死图死链与 SSRF 风险纯函数拦截器；
+   * `scripts/agent-ops/host-dual-acceptance.sh`：宿主机双端全自动验收（`agent-browser` 桌面端 + `agent-device` 真机/模拟器）；
+   * `scripts/sync-skills.sh`：业务工程通用方法论与技能自动回流、脱敏同步管道。
+

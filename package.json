@@ -1,0 +1,26 @@
+{
+  "name": "palantir-agent-workflow-template",
+  "version": "1.1.0",
+  "description": "Palantir Foundry 全角色工程协同、质保体系与部署纪律通用工作流模板",
+  "scripts": {
+    "rules:check": "tsx scripts/rules/evolve-agents-rules.ts --check",
+    "rules:evolve": "tsx scripts/rules/evolve-agents-rules.ts --evolve",
+    "guard:no-direct-db": "tsx scripts/guardrails/no-direct-db-in-personas.guard.ts",
+    "sync:skills": "bash scripts/sync-skills.sh",
+    "proxy:refresh": "bash scripts/refresh-proxy.sh",
+    "acceptance:host-dual": "bash scripts/agent-ops/host-dual-acceptance.sh"
+  },
+  "keywords": [
+    "palantir",
+    "agent",
+    "workflow",
+    "claude-code",
+    "hermes",
+    "antigravity",
+    "commandcode",
+    "e2e",
+    "guardrails"
+  ],
+  "author": "Palantir Workflow Team",
+  "license": "MIT"
+}
