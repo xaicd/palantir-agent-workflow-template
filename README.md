@@ -37,8 +37,11 @@
 
 ### 4. 智能体跨环境协同与数字员工运营
 
+> 团队编制与协同协议详见：[`docs/team-orchestration.md`](docs/team-orchestration.md)
+
 | Skill | 路径 | 适用角色 | 核心能力说明 |
 |:---|:---|:---|:---|
+| `master-orchestrator-dispatch` | `.agents/skills/master-orchestrator-dispatch/` | 主 Agent / 总监 | 主智能体派活与调度黄金规程：10段式任务书、底座工位解耦、4项真实证据核验协议 |
 | `digital-employee-operations` | `.agents/skills/digital-employee-operations/` | DS + Hermes | 将 E2E 升级为自主“数字员工”手臂：全生命周期商品/房型上架与零死穴、零空白自愈 |
 | `agy-orchestration` | `.agents/skills/agy-orchestration/` | 全部 Agent | 宿主机总指挥（Claude/Hermes）向容器内 Antigravity (AGY) 智能体派活的无头黄金 SOP |
 

@@ -159,7 +159,8 @@
 | | `proxy-network-workflow` | `.agents/skills/proxy-network-workflow/` | Mihomo TUN 代理热重载与内网自适应放行 |
 | | `deployment-workflow` | `.agents/skills/deployment-workflow/` | 4 级联级发布链（SQL → 镜像 → 静态前端 → 移动端包） |
 | | `deployment-tarball-test` | `.agents/skills/deployment-tarball-test/` | 测试环境轻量 V4 Tarball + systemd 软链秒级回滚极速发布 |
-| **智能体协同** | `digital-employee-operations` | `.agents/skills/digital-employee-operations/` | 数字员工全自主业务接管与 E2E 运营自愈 |
+| **智能体协同** | `master-orchestrator-dispatch` | `.agents/skills/master-orchestrator-dispatch/` | 主智能体（总监）派活 SOP：10段式任务书、底座解耦、4项真改证据核验协议 |
+| | `digital-employee-operations` | `.agents/skills/digital-employee-operations/` | 数字员工全自主业务接管与 E2E 运营自愈 |
 | | `agy-orchestration` | `.agents/skills/agy-orchestration/` | 宿主机跨容器无头调度 Antigravity (AGY) 黄金 SOP |
 | **多媒体与设计**| `ui-ux-pro-max` | `.agents/skills/ui-ux-pro-max/` | 67 种 UI 风格、96 套色板与组件设计决策 |
 | | `archify` | `.agents/skills/archify/` | 架构图、数据流、时序图可交互 HTML 生成 |

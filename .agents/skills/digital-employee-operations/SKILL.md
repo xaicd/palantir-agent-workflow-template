@@ -111,4 +111,22 @@ description: Hermes 数字员工端到端业务接管与自治运营工作流。
 | `python3 scripts/multimedia/generate-course-assets.py` | 启动教育数字员工：自动生成符合教学规范的 PPTX、PDF 讲义与 MP4 实训视频 |
 | `npm run test:e2e:course-materials` | 启动教育商户数字员工：自动化登录商户后台、建立讲师档案、发布多章节多媒体课程 |
 | `npm run db:seed:test-env-quality-upgrade` | 启动全域数字员工数据升级基线：覆盖全组织、全用户、全分类、全业态商户的高质量演示资产治理 |
-| `bash scripts/security/strix-scan.sh ./ quick 10` | **安全测试技能**（`strix` 技能，非新角色）：对自有代码/接口跑渗透测试，由现有数字员工/编码 agent 调用（本地 CLI，禁云；仅授权目标）|
+| `bash scripts/security/strix-scan.sh ./ quick 10` | **安全测试技能**：对自有代码/接口跑渗透测试，由现有数字员工/编码 agent 调用（本地 CLI，禁云；仅授权目标）|
+
+---
+
+## 六、 真实业务验收与防假通过硬门禁 (Truth-in-Testing)
+
+在进行数字员工运营与 E2E 测试时，必须贯彻以下三项硬核门禁：
+
+1. **绝对成功的业务状态断言**：
+   - 必须满足 `status === 200` 且响应体 `success === true` 才算业务真实走通；
+   - 严禁使用 `expect(res.status).toBeLessThan(500)` 这类假容错自我安慰；
+   - 服务端返回 400 或 422 参数校验失败时必须修复 Schema 校验漏配，严禁放过。
+2. **多媒体与图片真实可达性前置拦截**：
+   - 涉及图片、课件或视频上传的，文件上传完成后必须通过 HTTP 探针确认 URL 可正常访问读取；
+   - **不能访问的死图死链，必须在表单提交阶段直接拦截新增或保存动作**，不允许写“提交成功”假阳性。
+3. **缺陷反查定位与自愈循环 (Failure Diagnosis & Self-Healing)**：
+   - 当任一业务全链路失败时，自动定位根因（组织数据缺失、SKU 库存耗尽、图片链接失效）；
+   - 优先通过数字员工自主调用资源池补齐（自愈），而不是抛出原始异常直接退出。
+
